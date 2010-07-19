@@ -59,7 +59,7 @@
       var letters = {{{board}}};
       var board;
       $(function() {
-        board = new Board('board', letters);
+        board = new Board('board', letters, guess);
       });
     </script>
   </body>

@@ -1,4 +1,4 @@
-function Board(id, letters) {
+function Board(id, letters, callback) {
   var self = this;
   var r = Raphael(id, 240, 310);
   this.rows = [];
@@ -10,31 +10,10 @@ function Board(id, letters) {
       row = [];
     }
   }
-  this.input = r.rect(3, 263, 234, 44, 6);
-  this.input.attr('fill', 'white');
-  this.cursor = new Cursor(r);
+  this.input = new Input(r, callback);
   this.paper = r;
-
-  this.word = '';
-  this.rword = null;
-  $('body').keypress(function(e) {
-    if (e.which == 13) {
-      guess(self.word);
-      self.word = '';
-      if (self.rword)
-        self.rword.remove();
-      self.cursor.shift(0);
-    }
-    else {
-      var c = String.fromCharCode(e.charCode);
-      self.word = self.word + c;
-      if (self.rword)
-        self.rword.remove();
-      self.rword = self.paper.print(9, 287, self.word.toUpperCase(), self.paper.getFont('ChunkFive'), 25);
-      self.cursor.shift(self.rword.getBBox().width + 3);
-    }
-  });
 }
+
 function Cell(paper, row, col, letter) {
   this.row = row;
   this.col = col;
@@ -50,6 +29,62 @@ function Cell(paper, row, col, letter) {
   l.translate((54 - box.width) / 2, box.height / 2 + (54 - box.height) / 2);
   this.letter = l;
 }
+
+function Input(paper, callback) {
+  this.rect = paper.rect(3, 263, 234, 44, 6);
+  this.rect.attr('fill', 'white');
+  this.cursor = new Cursor(paper);
+  this.value = '';
+  this.gfx = null;
+  this.font = paper.getFont('ChunkFive');
+
+  var self = this;
+  $(document).keydown(function(e) {
+    if (e.ctrlKey || e.altKey || e.metaKey)
+      return true;
+
+    var dirty = false;
+    var result = true;
+    if (e.which == 13) {
+      result = false;
+      if (self.value.length > 0) {
+        callback(self.value);
+        self.value = '';
+        self.gfx.remove();
+        self.gfx = null;
+        dirty = true;
+      }
+    }
+    else if (e.which == 8) {
+      result = false;
+      if (self.value.length > 0) {
+        self.value = self.value.substring(0, self.value.length - 1);
+        if (self.gfx) self.gfx.remove();
+        if (self.value.length > 0)
+          self.gfx = paper.print(9, 287, self.value.toUpperCase(), self.font, 25);
+        else
+          self.gfx = null;
+        dirty = true;
+      }
+    }
+    else {
+      var c = String.fromCharCode(e.which);
+      if (c.match(/\w/)) {
+        result = false;
+        if (self.value.length < 16) {
+          self.value = self.value + c.toLowerCase();
+          if (self.gfx) self.gfx.remove();
+          self.gfx = paper.print(9, 287, self.value.toUpperCase(), self.font, 25);
+          dirty = true;
+        }
+      }
+    }
+    if (dirty)
+      self.cursor.placeAfter(self.gfx);
+    return result;
+  });
+}
+
 function Cursor(paper) {
   var line = this.line = paper.path("M9 268L9 302");
   this.pos = 0;
@@ -66,7 +101,8 @@ function Cursor(paper) {
   setTimeout(blinkOff, 500);
 }
 Cursor.prototype = {
-  shift: function(x) {
+  placeAfter: function(gfx) {
+    var x = gfx ? gfx.getBBox().width+3 : 0;
     var amount = x - this.pos;
     this.pos = x;
     this.line.translate(amount, 0);
