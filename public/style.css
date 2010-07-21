@@ -1,0 +1,58 @@
+body {
+  background-color: #ddd;
+}
+h2 {
+  font-family: verdana;
+  margin-top: 0;
+}
+#main {
+  margin: 10em auto;
+  width: 600px;
+  position: relative;
+}
+#players {
+  position: absolute;
+  width: 150px;
+  left: 0;
+}
+#players ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#players li {
+  margin: 0 0 0.2em 0;
+  display: block;
+  border: 1px solid black;
+  padding: 0.2em;
+  text-align: center;
+  background-color: white;
+  font-size: smaller;
+}
+#board {
+  position: absolute;
+  left: 180px;
+  width: 240px;
+}
+#words {
+  position: absolute;
+  right: 0;
+  width: 150px;
+  text-align: right;
+}
+#words ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#words li {
+  margin: 0 0 0.2em 0;
+  display: block;
+  border: 1px solid black;
+  padding: 0.2em;
+  text-align: center;
+  color: white;
+}
+#words li.success { background-color: green; }
+#words li.taken { background-color: yellow; color: black; }
+#words li.invalid { background-color: red; }

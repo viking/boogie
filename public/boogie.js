@@ -1,46 +1,76 @@
-function Board(id, letters, callback) {
-  var self = this;
+function Board(id, letters, inputCallback, startCallback) {
+  if (typeof(allowStart) == 'undefined')
+    allowStart = false;
+
   var r = Raphael(id, 240, 310);
-  this.rows = [];
-  var row = [];
+  this.cells = [];
   for (var i = 0; i < 16; i++) {
-    row.push(new Cell(r, Math.floor(i / 4), i % 4, letters[i]));
-    if (i % 4 == 3) {
-      this.rows.push(row);
-      row = [];
+    this.cells.push(new Cell(r, Math.floor(i / 4), i % 4, letters[i]));
+  }
+  this.started = letters.length > 0;
+  this.input = new Input(r, inputCallback);
+  if (!this.started) {
+    this.input.disable();
+    if (startCallback) {
+      var button = r.rect(33, 93, 180, 54, 10);
+      button.attr('fill', 'red');
+      var text = r.print(69, 121, 'START', r.getFont('ChunkFive'), 30);
+      text.attr('fill', 'white');
+
+      $(button.node).click(function(event) {
+        button.remove(); text.remove();
+        startCallback.call(this, event);
+      });
     }
   }
-  this.input = new Input(r, callback);
   this.paper = r;
 }
+Board.prototype = {
+  start: function(letters) {
+    this.started = true;
+    for (var i = 0; i < 16; i++)
+      this.cells[i].setLetter(letters[i]);
+    this.input.enable();
+  }
+};
 
 function Cell(paper, row, col, letter) {
   this.row = row;
   this.col = col;
-  var x = 60 * col + 3;
-  var y = 60 * row + 3;
-  this.rect = paper.rect(x, y, 54, 54, 6);
+  this.x = 60 * col + 3;
+  this.y = 60 * row + 3;
+  this.rect = paper.rect(this.x, this.y, 54, 54, 6);
   this.rect.attr('fill', 'white');
-
-  var l = paper.print(x, y, letter.toUpperCase(), paper.getFont('ChunkFive'), 30);
-  l.attr('fill', "black");
-  /*l.rotate(Math.floor(Math.random()*4) * 90);*/
-  var box = l.getBBox();
-  l.translate((54 - box.width) / 2, box.height / 2 + (54 - box.height) / 2);
-  this.letter = l;
+  this.paper = paper;
+  if (letter)
+    this.setLetter(letter);
 }
+Cell.prototype = {
+  setLetter: function(letter) {
+    var l = this.paper.print(this.x, this.y, letter.toUpperCase(), this.paper.getFont('ChunkFive'), 30);
+    l.attr('fill', "black");
+    /*l.rotate(Math.floor(Math.random()*4) * 90);*/
+    var box = l.getBBox();
+    l.translate((54 - box.width) / 2, box.height / 2 + (54 - box.height) / 2);
+    this.letter = l;
+  }
+};
 
 function Input(paper, callback) {
+  if (typeof(disabled) == 'undefined')
+    disabled = false;
+
   this.rect = paper.rect(3, 263, 234, 44, 6);
   this.rect.attr('fill', 'white');
   this.cursor = new Cursor(paper);
   this.value = '';
   this.gfx = null;
   this.font = paper.getFont('ChunkFive');
+  this.enabled = true;
 
   var self = this;
   $(document).keydown(function(e) {
-    if (e.ctrlKey || e.altKey || e.metaKey)
+    if (!self.enabled || e.ctrlKey || e.altKey || e.metaKey)
       return true;
 
     var dirty = false;
@@ -84,6 +114,18 @@ function Input(paper, callback) {
     return result;
   });
 }
+Input.prototype = {
+  enable: function() {
+    this.enabled = true;
+    this.rect.show();
+    this.cursor.show();
+  },
+  disable: function() {
+    this.enabled = false;
+    this.rect.hide();
+    this.cursor.hide();
+  }
+};
 
 function Cursor(paper) {
   var line = this.line = paper.path("M9 268L9 302");
@@ -101,6 +143,12 @@ function Cursor(paper) {
   setTimeout(blinkOff, 500);
 }
 Cursor.prototype = {
+  show: function() {
+    this.line.show();
+  },
+  hide: function() {
+    this.line.hide();
+  },
   placeAfter: function(gfx) {
     var x = gfx ? gfx.getBBox().width+3 : 0;
     var amount = x - this.pos;
