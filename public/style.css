@@ -7,13 +7,17 @@ h2 {
 }
 #main {
   margin: 10em auto;
-  width: 600px;
+  width: 650px;
   position: relative;
+}
+#timer {
+  text-align: center;
 }
 #players {
   position: absolute;
   width: 150px;
   left: 0;
+  top: 50px;
 }
 #players ul {
   list-style-type: none;
@@ -31,11 +35,13 @@ h2 {
 }
 #board {
   position: absolute;
+  top: 50px;
   left: 180px;
   width: 240px;
 }
 #words {
   position: absolute;
+  top: 50px;
   right: 0;
   width: 150px;
   text-align: right;
@@ -52,6 +58,7 @@ h2 {
   padding: 0.2em;
   text-align: center;
   color: white;
+  font-size: smaller;
 }
 #words li.success { background-color: green; }
 #words li.taken { background-color: yellow; color: black; }
